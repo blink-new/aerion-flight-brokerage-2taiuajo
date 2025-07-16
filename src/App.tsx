@@ -4,6 +4,10 @@ import { Input } from './components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card'
 import { Badge } from './components/ui/badge'
 import { Plane, MapPin, Calendar, Users, Clock, Star, ArrowRight, Calculator, Shield, Zap } from 'lucide-react'
+import { AuthDialog } from './components/AuthDialog'
+import { UserMenu } from './components/UserMenu'
+import { useAuth } from './hooks/useAuth'
+import toast from 'react-hot-toast'
 
 function App() {
   const [searchData, setSearchData] = useState({
@@ -12,9 +16,30 @@ function App() {
     date: '',
     passengers: '1'
   })
+  const [authDialogOpen, setAuthDialogOpen] = useState(false)
+  const { user, isLoading, isAuthenticated, logout } = useAuth()
 
   const handleSearch = () => {
+    if (!isAuthenticated) {
+      toast.error('Debes iniciar sesión para buscar vuelos')
+      setAuthDialogOpen(true)
+      return
+    }
     console.log('Searching flights:', searchData)
+    toast.success('Buscando vuelos disponibles...')
+  }
+
+  const handleAuthClick = () => {
+    if (isAuthenticated) {
+      // Si ya está autenticado, no hacer nada (el UserMenu maneja las acciones)
+      return
+    }
+    setAuthDialogOpen(true)
+  }
+
+  const handleLogout = () => {
+    logout()
+    toast.success('Sesión cerrada correctamente')
   }
 
   return (
@@ -33,9 +58,20 @@ function App() {
               <a href="#" className="text-gray-700 hover:text-primary transition-colors">Cómo Funciona</a>
               <a href="#" className="text-gray-700 hover:text-primary transition-colors">Contacto</a>
             </div>
-            <Button className="bg-primary hover:bg-primary/90">
-              Iniciar Sesión
-            </Button>
+            {isLoading ? (
+              <Button disabled className="bg-primary hover:bg-primary/90">
+                Cargando...
+              </Button>
+            ) : isAuthenticated && user ? (
+              <UserMenu user={user} onLogout={handleLogout} />
+            ) : (
+              <Button 
+                onClick={handleAuthClick}
+                className="bg-primary hover:bg-primary/90"
+              >
+                Iniciar Sesión
+              </Button>
+            )}
           </div>
         </div>
       </nav>
@@ -48,12 +84,27 @@ function App() {
               🚁 Aviación Privada Accesible
             </Badge>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              Vuela en Privado
-              <span className="block text-primary">Sin Ser Millonario</span>
+              {isAuthenticated && user ? (
+                <>
+                  Bienvenido, {user.displayName || user.email.split('@')[0]}
+                  <span className="block text-primary">¿Listo para volar?</span>
+                </>
+              ) : (
+                <>
+                  Vuela en Privado
+                  <span className="block text-primary">Sin Ser Millonario</span>
+                </>
+              )}
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed">
-              Conectamos pasajeros con jets privados. Desde vuelos charter premium completos 
-              hasta asientos empty leg accesibles. <span className="text-primary font-semibold">Desde $500 USD por persona.</span>
+              {isAuthenticated ? (
+                'Encuentra tu próximo vuelo privado. Compara precios entre vuelos charter completos y ofertas exclusivas de empty legs.'
+              ) : (
+                <>
+                  Conectamos pasajeros con jets privados. Desde vuelos charter premium completos 
+                  hasta asientos empty leg accesibles. <span className="text-primary font-semibold">Desde $500 USD por persona.</span>
+                </>
+              )}
             </p>
           </div>
 
@@ -352,6 +403,12 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Auth Dialog */}
+      <AuthDialog 
+        open={authDialogOpen} 
+        onOpenChange={setAuthDialogOpen} 
+      />
     </div>
   )
 }
