@@ -4,33 +4,48 @@ import { Badge } from './ui/badge'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table'
-import { Plane, MapPin, Clock, Users, Filter, Calendar, DollarSign } from 'lucide-react'
+import { Plane, MapPin, Clock, Users, Filter, DollarSign, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+interface Airport {
+  id: string
+  code: string
+  name: string
+  city: string
+  country: string
+  lat: number
+  lng: number
+}
+
+interface Aircraft {
+  id: string
+  model: string
+  manufacturer: string
+  capacity: number
+  category: string
+  hourly_rate: number
+}
 
 interface Flight {
   id: string
   flight_type: 'charter' | 'empty_leg'
-  origin_code: string
-  origin_city: string
-  origin_country: string
-  destination_code: string
-  destination_city: string
-  destination_country: string
+  aircraft_id: string
+  aircraft: Aircraft
+  departure_airport_id: string
+  departure_airport: Airport
+  arrival_airport_id: string
+  arrival_airport: Airport
   departure_date: string
   departure_time: string
+  arrival_date: string
   arrival_time: string
   duration_minutes: number
   distance_km: number
-  aircraft_type: string
-  aircraft_category: string
-  max_passengers: number
-  operator_name: string
-  aircraft_registration: string
-  charter_price_usd: number
-  empty_leg_price_per_seat_usd: number | null
-  available_seats: number
+  price_total: number
+  price_per_seat?: number
+  available_seats?: number
   status: string
+  operator: string
 }
 
 interface FlightsTableProps {
@@ -44,16 +59,55 @@ interface FlightsTableProps {
 
 export function FlightsTable({ searchParams }: FlightsTableProps) {
   const [flights, setFlights] = useState<Flight[]>([])
+  const [airports, setAirports] = useState<Airport[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState({
-    flight_type: '',
+    type: 'empty_leg',
     origin: searchParams?.from || '',
     destination: searchParams?.to || '',
     date: searchParams?.date || '',
-    max_price: '',
-    min_seats: searchParams?.passengers || '',
-    aircraft_category: ''
+    maxPrice: '',
+    category: ''
   })
+
+  // Cargar aeropuertos al inicio
+  useEffect(() => {
+    const fetchAirports = async () => {
+      try {
+        const response = await fetch('https://2taiuajo--flights.functions.blink.new/airports')
+        const data = await response.json()
+        if (data.success) {
+          setAirports(data.data)
+        }
+      } catch (error) {
+        console.error('Error fetching airports:', error)
+      }
+    }
+    fetchAirports()
+  }, [])
+
+  // Cargar vuelos iniciales
+  useEffect(() => {
+    const fetchInitialFlights = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch('https://2taiuajo--flights.functions.blink.new/flights?type=empty_leg')
+        const data = await response.json()
+        
+        if (data.success) {
+          setFlights(data.data)
+        } else {
+          toast.error('Error al cargar vuelos')
+        }
+      } catch (error) {
+        console.error('Error fetching flights:', error)
+        toast.error('Error al conectar con el servidor')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchInitialFlights()
+  }, [])
 
   const fetchFlights = async () => {
     setLoading(true)
@@ -66,7 +120,7 @@ export function FlightsTable({ searchParams }: FlightsTableProps) {
         }
       })
 
-      const response = await fetch(`https://2taiuajo--flights.functions.blink.new?${params}`)
+      const response = await fetch(`https://2taiuajo--flights.functions.blink.new/flights?${params}`)
       const data = await response.json()
       
       if (data.success) {
@@ -82,10 +136,6 @@ export function FlightsTable({ searchParams }: FlightsTableProps) {
     }
   }
 
-  useEffect(() => {
-    fetchFlights()
-  }, [])
-
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
@@ -96,13 +146,12 @@ export function FlightsTable({ searchParams }: FlightsTableProps) {
 
   const clearFilters = () => {
     setFilters({
-      flight_type: '',
+      type: 'empty_leg',
       origin: '',
       destination: '',
       date: '',
-      max_price: '',
-      min_seats: '',
-      aircraft_category: ''
+      maxPrice: '',
+      category: ''
     })
   }
 
@@ -115,16 +164,26 @@ export function FlightsTable({ searchParams }: FlightsTableProps) {
   const formatPrice = (flight: Flight) => {
     if (flight.flight_type === 'charter') {
       return {
-        main: `$${flight.charter_price_usd.toLocaleString()} USD`,
-        sub: `Avión completo (${flight.max_passengers} pax)`
+        main: `$${flight.price_total.toLocaleString()} USD`,
+        sub: `Avión completo (${flight.aircraft.capacity} pax)`
       }
     } else {
-      const perSeat = flight.empty_leg_price_per_seat_usd || 0
+      const perSeat = flight.price_per_seat || 0
       return {
         main: `$${perSeat.toLocaleString()} USD`,
         sub: `Por persona (${flight.available_seats} disponibles)`
       }
     }
+  }
+
+  const getCategoryLabel = (category: string) => {
+    const labels = {
+      'light': 'Jet Ligero',
+      'midsize': 'Jet Mediano', 
+      'heavy': 'Jet Pesado',
+      'ultra-long-range': 'Ultra Largo Alcance'
+    }
+    return labels[category as keyof typeof labels] || category
   }
 
   const handleBookFlight = (flight: Flight) => {
@@ -134,8 +193,229 @@ export function FlightsTable({ searchParams }: FlightsTableProps) {
 
   if (loading) {
     return (
-      <div className=\"flex items-center justify-center py-20\">\n        <div className=\"text-center\">\n          <Plane className=\"h-12 w-12 text-primary mx-auto mb-4 animate-pulse\" />\n          <p className=\"text-lg text-gray-600\">Cargando vuelos disponibles...</p>\n        </div>\n      </div>\n    )
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <Plane className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
+          <p className="text-lg text-gray-600">Cargando vuelos disponibles...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className=\"space-y-6\">\n      {/* Filtros */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center gap-2\">\n            <Filter className=\"h-5 w-5\" />\n            Filtros de Búsqueda\n          </CardTitle>\n          <CardDescription>\n            Refina tu búsqueda para encontrar el vuelo perfecto\n          </CardDescription>\n        </CardHeader>\n        <CardContent>\n          <div className=\"grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4\">\n            <Select value={filters.flight_type} onValueChange={(value) => handleFilterChange('flight_type', value)}>\n              <SelectTrigger>\n                <SelectValue placeholder=\"Tipo de vuelo\" />\n              </SelectTrigger>\n              <SelectContent>\n                <SelectItem value=\"\">Todos los tipos</SelectItem>\n                <SelectItem value=\"charter\">Charter Completo</SelectItem>\n                <SelectItem value=\"empty_leg\">Empty Leg</SelectItem>\n              </SelectContent>\n            </Select>\n\n            <Input\n              placeholder=\"Origen\"\n              value={filters.origin}\n              onChange={(e) => handleFilterChange('origin', e.target.value)}\n            />\n\n            <Input\n              placeholder=\"Destino\"\n              value={filters.destination}\n              onChange={(e) => handleFilterChange('destination', e.target.value)}\n            />\n\n            <Input\n              type=\"date\"\n              value={filters.date}\n              onChange={(e) => handleFilterChange('date', e.target.value)}\n            />\n\n            <Input\n              type=\"number\"\n              placeholder=\"Precio máximo (USD)\"\n              value={filters.max_price}\n              onChange={(e) => handleFilterChange('max_price', e.target.value)}\n            />\n\n            <Input\n              type=\"number\"\n              placeholder=\"Mín. asientos\"\n              value={filters.min_seats}\n              onChange={(e) => handleFilterChange('min_seats', e.target.value)}\n            />\n\n            <Select value={filters.aircraft_category} onValueChange={(value) => handleFilterChange('aircraft_category', value)}>\n              <SelectTrigger>\n                <SelectValue placeholder=\"Categoría\" />\n              </SelectTrigger>\n              <SelectContent>\n                <SelectItem value=\"\">Todas las categorías</SelectItem>\n                <SelectItem value=\"light_jet\">Jet Ligero</SelectItem>\n                <SelectItem value=\"mid_size\">Jet Mediano</SelectItem>\n                <SelectItem value=\"heavy_jet\">Jet Pesado</SelectItem>\n                <SelectItem value=\"turboprop\">Turbohélice</SelectItem>\n              </SelectContent>\n            </Select>\n          </div>\n\n          <div className=\"flex gap-2\">\n            <Button onClick={applyFilters} className=\"bg-primary hover:bg-primary/90\">\n              <Filter className=\"h-4 w-4 mr-2\" />\n              Aplicar Filtros\n            </Button>\n            <Button variant=\"outline\" onClick={clearFilters}>\n              Limpiar\n            </Button>\n          </div>\n        </CardContent>\n      </Card>\n\n      {/* Resultados */}\n      <Card>\n        <CardHeader>\n          <CardTitle className=\"flex items-center justify-between\">\n            <span>Vuelos Disponibles ({flights.length})</span>\n            <Badge variant=\"secondary\">\n              {flights.filter(f => f.flight_type === 'empty_leg').length} Empty Legs • \n              {flights.filter(f => f.flight_type === 'charter').length} Charter\n            </Badge>\n          </CardTitle>\n        </CardHeader>\n        <CardContent>\n          {flights.length === 0 ? (\n            <div className=\"text-center py-12\">\n              <Plane className=\"h-16 w-16 text-gray-300 mx-auto mb-4\" />\n              <h3 className=\"text-lg font-semibold text-gray-600 mb-2\">No se encontraron vuelos</h3>\n              <p className=\"text-gray-500\">Intenta ajustar tus filtros de búsqueda</p>\n            </div>\n          ) : (\n            <div className=\"space-y-4\">\n              {flights.map((flight) => {\n                const price = formatPrice(flight)\n                return (\n                  <Card key={flight.id} className=\"hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary\">\n                    <CardContent className=\"p-6\">\n                      <div className=\"flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4\">\n                        {/* Información del vuelo */}\n                        <div className=\"flex-1 space-y-3\">\n                          <div className=\"flex items-center gap-3\">\n                            <Badge \n                              variant={flight.flight_type === 'charter' ? 'default' : 'secondary'}\n                              className={flight.flight_type === 'charter' ? 'bg-primary' : 'bg-accent'}\n                            >\n                              {flight.flight_type === 'charter' ? 'Charter Completo' : 'Empty Leg'}\n                            </Badge>\n                            <span className=\"text-sm text-gray-500\">{flight.operator_name}</span>\n                          </div>\n\n                          <div className=\"grid grid-cols-1 md:grid-cols-3 gap-4\">\n                            {/* Ruta */}\n                            <div className=\"flex items-center gap-2\">\n                              <MapPin className=\"h-4 w-4 text-gray-400\" />\n                              <div>\n                                <div className=\"font-semibold\">\n                                  {flight.origin_code} → {flight.destination_code}\n                                </div>\n                                <div className=\"text-sm text-gray-500\">\n                                  {flight.origin_city} → {flight.destination_city}\n                                </div>\n                              </div>\n                            </div>\n\n                            {/* Horario */}\n                            <div className=\"flex items-center gap-2\">\n                              <Clock className=\"h-4 w-4 text-gray-400\" />\n                              <div>\n                                <div className=\"font-semibold\">\n                                  {flight.departure_time} - {flight.arrival_time}\n                                </div>\n                                <div className=\"text-sm text-gray-500\">\n                                  {new Date(flight.departure_date).toLocaleDateString('es-AR')} • {formatDuration(flight.duration_minutes)}\n                                </div>\n                              </div>\n                            </div>\n\n                            {/* Aeronave */}\n                            <div className=\"flex items-center gap-2\">\n                              <Plane className=\"h-4 w-4 text-gray-400\" />\n                              <div>\n                                <div className=\"font-semibold\">{flight.aircraft_type}</div>\n                                <div className=\"text-sm text-gray-500\">\n                                  <Users className=\"h-3 w-3 inline mr-1\" />\n                                  {flight.available_seats} de {flight.max_passengers} disponibles\n                                </div>\n                              </div>\n                            </div>\n                          </div>\n                        </div>\n\n                        {/* Precio y acción */}\n                        <div className=\"flex flex-col items-end gap-3 min-w-[200px]\">\n                          <div className=\"text-right\">\n                            <div className=\"text-2xl font-bold text-primary\">{price.main}</div>\n                            <div className=\"text-sm text-gray-500\">{price.sub}</div>\n                          </div>\n                          <Button \n                            onClick={() => handleBookFlight(flight)}\n                            className=\"bg-primary hover:bg-primary/90 w-full\"\n                          >\n                            <DollarSign className=\"h-4 w-4 mr-2\" />\n                            Reservar\n                          </Button>\n                        </div>\n                      </div>\n                    </CardContent>\n                  </Card>\n                )\n              })}\n            </div>\n          )}\n        </CardContent>\n      </Card>\n    </div>\n  )\n}
+    <div className="space-y-6">
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtros de Búsqueda
+          </CardTitle>
+          <CardDescription>
+            Refina tu búsqueda para encontrar el vuelo perfecto
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+            <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Tipo de vuelo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="empty_leg">Empty Leg</SelectItem>
+                <SelectItem value="charter">Charter Completo</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.origin} onValueChange={(value) => handleFilterChange('origin', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Origen" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los orígenes</SelectItem>
+                {airports.map((airport) => (
+                  <SelectItem key={airport.id} value={airport.id}>
+                    {airport.code} - {airport.city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.destination} onValueChange={(value) => handleFilterChange('destination', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Destino" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los destinos</SelectItem>
+                {airports.map((airport) => (
+                  <SelectItem key={airport.id} value={airport.id}>
+                    {airport.code} - {airport.city}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="date"
+              value={filters.date}
+              onChange={(e) => handleFilterChange('date', e.target.value)}
+            />
+
+            <Input
+              type="number"
+              placeholder="Precio máximo (USD)"
+              value={filters.maxPrice}
+              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+            />
+
+            <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas las categorías</SelectItem>
+                <SelectItem value="light">Jet Ligero</SelectItem>
+                <SelectItem value="midsize">Jet Mediano</SelectItem>
+                <SelectItem value="heavy">Jet Pesado</SelectItem>
+                <SelectItem value="ultra-long-range">Ultra Largo Alcance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={applyFilters} className="bg-primary hover:bg-primary/90">
+              <Search className="h-4 w-4 mr-2" />
+              Buscar Vuelos
+            </Button>
+            <Button variant="outline" onClick={clearFilters}>
+              Limpiar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Resultados */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Vuelos Disponibles ({flights.length})</span>
+            <Badge variant="secondary">
+              {flights.filter(f => f.flight_type === 'empty_leg').length} Empty Legs • 
+              {flights.filter(f => f.flight_type === 'charter').length} Charter
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {flights.length === 0 ? (
+            <div className="text-center py-12">
+              <Plane className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">No se encontraron vuelos</h3>
+              <p className="text-gray-500">Intenta ajustar tus filtros de búsqueda</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {flights.map((flight) => {
+                const price = formatPrice(flight)
+                return (
+                  <Card key={flight.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        {/* Información del vuelo */}
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <Badge 
+                              variant={flight.flight_type === 'charter' ? 'default' : 'secondary'}
+                              className={flight.flight_type === 'charter' ? 'bg-primary' : 'bg-accent'}
+                            >
+                              {flight.flight_type === 'charter' ? 'Charter Completo' : 'Empty Leg'}
+                            </Badge>
+                            <span className="text-sm text-gray-500">{flight.operator}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {getCategoryLabel(flight.aircraft.category)}
+                            </Badge>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Ruta */}
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-gray-400" />
+                              <div>
+                                <div className="font-semibold">
+                                  {flight.departure_airport.code} → {flight.arrival_airport.code}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {flight.departure_airport.city} → {flight.arrival_airport.city}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {flight.distance_km} km
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Horario */}
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-gray-400" />
+                              <div>
+                                <div className="font-semibold">
+                                  {flight.departure_time} - {flight.arrival_time}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {new Date(flight.departure_date).toLocaleDateString('es-AR')}
+                                </div>
+                                <div className="text-xs text-gray-400">
+                                  {formatDuration(flight.duration_minutes)}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Aeronave */}
+                            <div className="flex items-center gap-2">
+                              <Plane className="h-4 w-4 text-gray-400" />
+                              <div>
+                                <div className="font-semibold">{flight.aircraft.model}</div>
+                                <div className="text-sm text-gray-500">
+                                  {flight.aircraft.manufacturer}
+                                </div>
+                                <div className="text-xs text-gray-400 flex items-center">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  {flight.flight_type === 'empty_leg' 
+                                    ? `${flight.available_seats} de ${flight.aircraft.capacity} disponibles`
+                                    : `${flight.aircraft.capacity} pasajeros`
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Precio y acción */}
+                        <div className="flex flex-col items-end gap-3 min-w-[200px]">
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary">{price.main}</div>
+                            <div className="text-sm text-gray-500">{price.sub}</div>
+                            {flight.flight_type === 'empty_leg' && (
+                              <div className="text-xs text-green-600 font-medium">
+                                ¡Hasta 70% de descuento!
+                              </div>
+                            )}
+                          </div>
+                          <Button 
+                            onClick={() => handleBookFlight(flight)}
+                            className="bg-primary hover:bg-primary/90 w-full"
+                          >
+                            <DollarSign className="h-4 w-4 mr-2" />
+                            {flight.flight_type === 'charter' ? 'Cotizar' : 'Reservar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

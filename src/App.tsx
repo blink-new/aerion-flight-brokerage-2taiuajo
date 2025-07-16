@@ -7,6 +7,8 @@ import { Plane, MapPin, Calendar, Users, Clock, Star, ArrowRight, Calculator, Sh
 import { AuthDialog } from './components/AuthDialog'
 import { UserMenu } from './components/UserMenu'
 import { FlightsTable } from './components/FlightsTable'
+import { CharterQuote } from './components/CharterQuote'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs'
 import { useAuth } from './hooks/useAuth'
 import toast from 'react-hot-toast'
 
@@ -406,7 +408,39 @@ function App() {
                 Explora nuestros vuelos charter completos y ofertas exclusivas de empty legs
               </p>
             </div>
-            <FlightsTable searchParams={searchData} />
+            
+            <Tabs defaultValue="empty-legs" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8">
+                <TabsTrigger value="empty-legs" className="text-lg py-3">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Empty Legs
+                </TabsTrigger>
+                <TabsTrigger value="charter" className="text-lg py-3">
+                  <Plane className="h-4 w-4 mr-2" />
+                  Charter Completo
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="empty-legs" className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Vuelos Empty Leg Disponibles</h2>
+                  <p className="text-gray-600">
+                    Aprovecha estos vuelos ya programados y ahorra hasta 70% en tu próximo viaje
+                  </p>
+                </div>
+                <FlightsTable searchParams={searchData} />
+              </TabsContent>
+              
+              <TabsContent value="charter" className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Cotización Charter Personalizada</h2>
+                  <p className="text-gray-600">
+                    Obtén una cotización para tu vuelo privado completo con total flexibilidad
+                  </p>
+                </div>
+                <CharterQuote />
+              </TabsContent>
+            </Tabs>
           </div>
         </section>
       )}

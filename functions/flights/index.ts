@@ -1,1221 +1,184 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
-// Datos mock de vuelos para Argentina y destinos internacionales
-const mockFlights = [
-  // Vuelos domésticos Argentina - Empty Legs
-  {
-    id: "fl_001",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "COR",
-    destination_city: "Córdoba",
-    destination_country: "Argentina",
-    departure_date: "2025-07-20",
-    departure_time: "09:00",
-    arrival_time: "10:30",
-    duration_minutes: 90,
-    distance_km: 695,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Aerion Charter",
-    aircraft_registration: "LV-ABC",
-    charter_price_usd: 4200,
-    empty_leg_price_per_seat_usd: 380,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_002",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "MDZ",
-    destination_city: "Mendoza",
-    destination_country: "Argentina",
-    departure_date: "2025-07-21",
-    departure_time: "14:00",
-    arrival_time: "16:00",
-    duration_minutes: 120,
-    distance_km: 1037,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Sky Executive",
-    aircraft_registration: "LV-DEF",
-    charter_price_usd: 3800,
-    empty_leg_price_per_seat_usd: 420,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_003",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "BRC",
-    destination_city: "Bariloche",
-    destination_country: "Argentina",
-    departure_date: "2025-07-22",
-    departure_time: "11:00",
-    arrival_time: "13:30",
-    duration_minutes: 150,
-    distance_km: 1641,
-    aircraft_type: "Phenom 300",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "Patagonia Air",
-    aircraft_registration: "LV-GHI",
-    charter_price_usd: 5800,
-    empty_leg_price_per_seat_usd: 580,
-    available_seats: 4,
-    status: "available"
-  },
-  {
-    id: "fl_004",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "SLA",
-    destination_city: "Salta",
-    destination_country: "Argentina",
-    departure_date: "2025-07-23",
-    departure_time: "08:30",
-    arrival_time: "11:00",
-    duration_minutes: 150,
-    distance_km: 1284,
-    aircraft_type: "Citation XLS",
-    aircraft_category: "mid_size",
-    max_passengers: 9,
-    operator_name: "Norte Aviation",
-    aircraft_registration: "LV-JKL",
-    charter_price_usd: 5200,
-    empty_leg_price_per_seat_usd: 480,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_005",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "IGR",
-    destination_city: "Iguazú",
-    destination_country: "Argentina",
-    departure_date: "2025-07-24",
-    departure_time: "10:00",
-    arrival_time: "12:00",
-    duration_minutes: 120,
-    distance_km: 1138,
-    aircraft_type: "King Air 250",
-    aircraft_category: "turboprop",
-    max_passengers: 8,
-    operator_name: "Misiones Air",
-    aircraft_registration: "LV-MNO",
-    charter_price_usd: 4500,
-    empty_leg_price_per_seat_usd: 450,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_006",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "USH",
-    destination_city: "Ushuaia",
-    destination_country: "Argentina",
-    departure_date: "2025-07-25",
-    departure_time: "07:00",
-    arrival_time: "10:30",
-    duration_minutes: 210,
-    distance_km: 2430,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Tierra del Fuego Aviation",
-    aircraft_registration: "LV-PQR",
-    charter_price_usd: 8900,
-    empty_leg_price_per_seat_usd: 750,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_007",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "TUC",
-    destination_city: "Tucumán",
-    destination_country: "Argentina",
-    departure_date: "2025-07-26",
-    departure_time: "15:00",
-    arrival_time: "17:00",
-    duration_minutes: 120,
-    distance_km: 1311,
-    aircraft_type: "Beechcraft Premier",
-    aircraft_category: "light_jet",
-    max_passengers: 6,
-    operator_name: "NOA Aviation",
-    aircraft_registration: "LV-STU",
-    charter_price_usd: 4800,
-    empty_leg_price_per_seat_usd: 520,
-    available_seats: 4,
-    status: "available"
-  },
-  {
-    id: "fl_008",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "RES",
-    destination_city: "Resistencia",
-    destination_country: "Argentina",
-    departure_date: "2025-07-27",
-    departure_time: "12:00",
-    arrival_time: "14:00",
-    duration_minutes: 120,
-    distance_km: 1050,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Chaco Air",
-    aircraft_registration: "LV-VWX",
-    charter_price_usd: 4200,
-    empty_leg_price_per_seat_usd: 380,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_009",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "PMY",
-    destination_city: "Puerto Madryn",
-    destination_country: "Argentina",
-    departure_date: "2025-07-28",
-    departure_time: "09:30",
-    arrival_time: "12:00",
-    duration_minutes: 150,
-    distance_km: 1380,
-    aircraft_type: "Citation CJ4",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "Patagonia Executive",
-    aircraft_registration: "LV-YZA",
-    charter_price_usd: 5500,
-    empty_leg_price_per_seat_usd: 550,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_010",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "FTE",
-    destination_city: "El Calafate",
-    destination_country: "Argentina",
-    departure_date: "2025-07-29",
-    departure_time: "08:00",
-    arrival_time: "11:30",
-    duration_minutes: 210,
-    distance_km: 2140,
-    aircraft_type: "Citation XLS+",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Glaciar Aviation",
-    aircraft_registration: "LV-BCD",
-    charter_price_usd: 7800,
-    empty_leg_price_per_seat_usd: 680,
-    available_seats: 6,
-    status: "available"
-  },
-
-  // Vuelos internacionales - Empty Legs
-  {
-    id: "fl_011",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "SCL",
-    destination_city: "Santiago",
-    destination_country: "Chile",
-    departure_date: "2025-07-30",
-    departure_time: "10:00",
-    arrival_time: "12:30",
-    duration_minutes: 150,
-    distance_km: 1138,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Trans-Andes Aviation",
-    aircraft_registration: "LV-EFG",
-    charter_price_usd: 6200,
-    empty_leg_price_per_seat_usd: 520,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_012",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "PDP",
-    destination_city: "Punta del Este",
-    destination_country: "Uruguay",
-    departure_date: "2025-07-31",
-    departure_time: "16:00",
-    arrival_time: "17:00",
-    duration_minutes: 60,
-    distance_km: 340,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Rio de la Plata Air",
-    aircraft_registration: "LV-HIJ",
-    charter_price_usd: 2800,
-    empty_leg_price_per_seat_usd: 280,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_013",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "ASU",
-    destination_city: "Asunción",
-    destination_country: "Paraguay",
-    departure_date: "2025-08-01",
-    departure_time: "11:00",
-    arrival_time: "12:30",
-    duration_minutes: 90,
-    distance_km: 1065,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Mercosur Aviation",
-    aircraft_registration: "LV-KLM",
-    charter_price_usd: 3600,
-    empty_leg_price_per_seat_usd: 320,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_014",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "GRU",
-    destination_city: "São Paulo",
-    destination_country: "Brasil",
-    departure_date: "2025-08-02",
-    departure_time: "13:00",
-    arrival_time: "15:30",
-    duration_minutes: 150,
-    distance_km: 1675,
-    aircraft_type: "Citation XLS+",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Brasil-Argentina Air",
-    aircraft_registration: "LV-NOP",
-    charter_price_usd: 5800,
-    empty_leg_price_per_seat_usd: 480,
-    available_seats: 8,
-    status: "available"
-  },
-
-  // Vuelos Charter Completos
-  {
-    id: "fl_015",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "COR",
-    destination_city: "Córdoba",
-    destination_country: "Argentina",
-    departure_date: "2025-08-03",
-    departure_time: "10:00",
-    arrival_time: "11:30",
-    duration_minutes: 90,
-    distance_km: 695,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Aerion Charter",
-    aircraft_registration: "LV-QRS",
-    charter_price_usd: 4200,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_016",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "MDZ",
-    destination_city: "Mendoza",
-    destination_country: "Argentina",
-    departure_date: "2025-08-04",
-    departure_time: "15:00",
-    arrival_time: "17:00",
-    duration_minutes: 120,
-    distance_km: 1037,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Cuyo Aviation",
-    aircraft_registration: "LV-TUV",
-    charter_price_usd: 6800,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 10,
-    status: "available"
-  },
-  {
-    id: "fl_017",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "BRC",
-    destination_city: "Bariloche",
-    destination_country: "Argentina",
-    departure_date: "2025-08-05",
-    departure_time: "12:00",
-    arrival_time: "14:30",
-    duration_minutes: 150,
-    distance_km: 1641,
-    aircraft_type: "Citation XLS+",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Patagonia Air",
-    aircraft_registration: "LV-WXY",
-    charter_price_usd: 7200,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 10,
-    status: "available"
-  },
-  {
-    id: "fl_018",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "SCL",
-    destination_city: "Santiago",
-    destination_country: "Chile",
-    departure_date: "2025-08-06",
-    departure_time: "09:00",
-    arrival_time: "11:30",
-    duration_minutes: 150,
-    distance_km: 1138,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Trans-Andes Aviation",
-    aircraft_registration: "LV-ZAB",
-    charter_price_usd: 6900,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 10,
-    status: "available"
-  },
-
-  // Más vuelos Empty Legs para completar 50+
-  {
-    id: "fl_019",
-    flight_type: "empty_leg",
-    origin_code: "COR",
-    origin_city: "Córdoba",
-    origin_country: "Argentina",
-    destination_code: "EZE",
-    destination_city: "Buenos Aires",
-    destination_country: "Argentina",
-    departure_date: "2025-08-07",
-    departure_time: "17:00",
-    arrival_time: "18:30",
-    duration_minutes: 90,
-    distance_km: 695,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Aerion Charter",
-    aircraft_registration: "LV-CDE",
-    charter_price_usd: 4200,
-    empty_leg_price_per_seat_usd: 380,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_020",
-    flight_type: "empty_leg",
-    origin_code: "MDZ",
-    origin_city: "Mendoza",
-    origin_country: "Argentina",
-    destination_code: "EZE",
-    destination_city: "Buenos Aires",
-    destination_country: "Argentina",
-    departure_date: "2025-08-08",
-    departure_time: "18:00",
-    arrival_time: "20:00",
-    duration_minutes: 120,
-    distance_km: 1037,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Sky Executive",
-    aircraft_registration: "LV-FGH",
-    charter_price_usd: 3800,
-    empty_leg_price_per_seat_usd: 420,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_021",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "NQN",
-    destination_city: "Neuquén",
-    destination_country: "Argentina",
-    departure_date: "2025-08-09",
-    departure_time: "14:00",
-    arrival_time: "16:30",
-    duration_minutes: 150,
-    distance_km: 1176,
-    aircraft_type: "Citation CJ4",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "Neuquén Aviation",
-    aircraft_registration: "LV-IJK",
-    charter_price_usd: 4900,
-    empty_leg_price_per_seat_usd: 490,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_022",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "JUJ",
-    destination_city: "Jujuy",
-    destination_country: "Argentina",
-    departure_date: "2025-08-10",
-    departure_time: "07:30",
-    arrival_time: "10:00",
-    duration_minutes: 150,
-    distance_km: 1518,
-    aircraft_type: "Citation XLS",
-    aircraft_category: "mid_size",
-    max_passengers: 9,
-    operator_name: "Norte Aviation",
-    aircraft_registration: "LV-LMN",
-    charter_price_usd: 5600,
-    empty_leg_price_per_seat_usd: 520,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_023",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "RGL",
-    destination_city: "Río Gallegos",
-    destination_country: "Argentina",
-    departure_date: "2025-08-11",
-    departure_time: "06:00",
-    arrival_time: "09:00",
-    duration_minutes: 180,
-    distance_km: 2130,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Santa Cruz Aviation",
-    aircraft_registration: "LV-OPQ",
-    charter_price_usd: 8200,
-    empty_leg_price_per_seat_usd: 720,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_024",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "CTC",
-    destination_city: "Catamarca",
-    destination_country: "Argentina",
-    departure_date: "2025-08-12",
-    departure_time: "13:00",
-    arrival_time: "15:30",
-    duration_minutes: 150,
-    distance_km: 1165,
-    aircraft_type: "King Air 250",
-    aircraft_category: "turboprop",
-    max_passengers: 8,
-    operator_name: "Catamarca Air",
-    aircraft_registration: "LV-RST",
-    charter_price_usd: 4400,
-    empty_leg_price_per_seat_usd: 440,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_025",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "LRA",
-    destination_city: "La Rioja",
-    destination_country: "Argentina",
-    departure_date: "2025-08-13",
-    departure_time: "11:30",
-    arrival_time: "14:00",
-    duration_minutes: 150,
-    distance_km: 1089,
-    aircraft_type: "Beechcraft Premier",
-    aircraft_category: "light_jet",
-    max_passengers: 6,
-    operator_name: "Cuyo Aviation",
-    aircraft_registration: "LV-UVW",
-    charter_price_usd: 4600,
-    empty_leg_price_per_seat_usd: 460,
-    available_seats: 4,
-    status: "available"
-  },
-  {
-    id: "fl_026",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "SDE",
-    destination_city: "Santiago del Estero",
-    destination_country: "Argentina",
-    departure_date: "2025-08-14",
-    departure_time: "16:00",
-    arrival_time: "18:00",
-    duration_minutes: 120,
-    distance_km: 1042,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Santiago Air",
-    aircraft_registration: "LV-XYZ",
-    charter_price_usd: 4100,
-    empty_leg_price_per_seat_usd: 390,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_027",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "FMA",
-    destination_city: "Formosa",
-    destination_country: "Argentina",
-    departure_date: "2025-08-15",
-    departure_time: "08:00",
-    arrival_time: "10:30",
-    duration_minutes: 150,
-    distance_km: 1173,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Formosa Aviation",
-    aircraft_registration: "LV-ABC2",
-    charter_price_usd: 4300,
-    empty_leg_price_per_seat_usd: 400,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_028",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "VDM",
-    destination_city: "Viedma",
-    destination_country: "Argentina",
-    departure_date: "2025-08-16",
-    departure_time: "15:30",
-    arrival_time: "17:30",
-    duration_minutes: 120,
-    distance_km: 630,
-    aircraft_type: "Citation CJ2",
-    aircraft_category: "light_jet",
-    max_passengers: 6,
-    operator_name: "Río Negro Air",
-    aircraft_registration: "LV-DEF2",
-    charter_price_usd: 3600,
-    empty_leg_price_per_seat_usd: 360,
-    available_seats: 4,
-    status: "available"
-  },
-  {
-    id: "fl_029",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "CNQ",
-    destination_city: "Corrientes",
-    destination_country: "Argentina",
-    departure_date: "2025-08-17",
-    departure_time: "12:00",
-    arrival_time: "14:00",
-    duration_minutes: 120,
-    distance_km: 842,
-    aircraft_type: "King Air 250",
-    aircraft_category: "turboprop",
-    max_passengers: 8,
-    operator_name: "Litoral Aviation",
-    aircraft_registration: "LV-GHI2",
-    charter_price_usd: 3900,
-    empty_leg_price_per_seat_usd: 380,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_030",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "PSS",
-    destination_city: "Posadas",
-    destination_country: "Argentina",
-    departure_date: "2025-08-18",
-    departure_time: "09:00",
-    arrival_time: "11:30",
-    duration_minutes: 150,
-    distance_km: 1050,
-    aircraft_type: "Citation CJ4",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "Misiones Air",
-    aircraft_registration: "LV-JKL2",
-    charter_price_usd: 4500,
-    empty_leg_price_per_seat_usd: 450,
-    available_seats: 5,
-    status: "available"
-  },
-
-  // Vuelos internacionales adicionales
-  {
-    id: "fl_031",
-    flight_type: "empty_leg",
-    origin_code: "SCL",
-    origin_city: "Santiago",
-    origin_country: "Chile",
-    destination_code: "EZE",
-    destination_city: "Buenos Aires",
-    destination_country: "Argentina",
-    departure_date: "2025-08-19",
-    departure_time: "14:00",
-    arrival_time: "16:30",
-    duration_minutes: 150,
-    distance_km: 1138,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Trans-Andes Aviation",
-    aircraft_registration: "LV-MNO2",
-    charter_price_usd: 6200,
-    empty_leg_price_per_seat_usd: 520,
-    available_seats: 8,
-    status: "available"
-  },
-  {
-    id: "fl_032",
-    flight_type: "empty_leg",
-    origin_code: "PDP",
-    origin_city: "Punta del Este",
-    origin_country: "Uruguay",
-    destination_code: "EZE",
-    destination_city: "Buenos Aires",
-    destination_country: "Argentina",
-    departure_date: "2025-08-20",
-    departure_time: "18:00",
-    arrival_time: "19:00",
-    duration_minutes: 60,
-    distance_km: 340,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Rio de la Plata Air",
-    aircraft_registration: "LV-PQR2",
-    charter_price_usd: 2800,
-    empty_leg_price_per_seat_usd: 280,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_033",
-    flight_type: "empty_leg",
-    origin_code: "ASU",
-    origin_city: "Asunción",
-    origin_country: "Paraguay",
-    destination_code: "EZE",
-    destination_city: "Buenos Aires",
-    destination_country: "Argentina",
-    departure_date: "2025-08-21",
-    departure_time: "15:00",
-    arrival_time: "16:30",
-    duration_minutes: 90,
-    distance_km: 1065,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Mercosur Aviation",
-    aircraft_registration: "LV-STU2",
-    charter_price_usd: 3600,
-    empty_leg_price_per_seat_usd: 320,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_034",
-    flight_type: "empty_leg",
-    origin_code: "GRU",
-    origin_city: "São Paulo",
-    origin_country: "Brasil",
-    destination_code: "EZE",
-    destination_city: "Buenos Aires",
-    destination_country: "Argentina",
-    departure_date: "2025-08-22",
-    departure_time: "17:00",
-    arrival_time: "19:30",
-    duration_minutes: 150,
-    distance_km: 1675,
-    aircraft_type: "Citation XLS+",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Brasil-Argentina Air",
-    aircraft_registration: "LV-VWX2",
-    charter_price_usd: 5800,
-    empty_leg_price_per_seat_usd: 480,
-    available_seats: 9,
-    status: "available"
-  },
-
-  // Más vuelos charter
-  {
-    id: "fl_035",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "SLA",
-    destination_city: "Salta",
-    destination_country: "Argentina",
-    departure_date: "2025-08-23",
-    departure_time: "08:00",
-    arrival_time: "10:30",
-    duration_minutes: 150,
-    distance_km: 1284,
-    aircraft_type: "Citation XLS",
-    aircraft_category: "mid_size",
-    max_passengers: 9,
-    operator_name: "Norte Aviation",
-    aircraft_registration: "LV-YZA2",
-    charter_price_usd: 6400,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 9,
-    status: "available"
-  },
-  {
-    id: "fl_036",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "IGR",
-    destination_city: "Iguazú",
-    destination_country: "Argentina",
-    departure_date: "2025-08-24",
-    departure_time: "11:00",
-    arrival_time: "13:00",
-    duration_minutes: 120,
-    distance_km: 1138,
-    aircraft_type: "Citation CJ4",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "Misiones Air",
-    aircraft_registration: "LV-BCD2",
-    charter_price_usd: 5200,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 8,
-    status: "available"
-  },
-  {
-    id: "fl_037",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "USH",
-    destination_city: "Ushuaia",
-    destination_country: "Argentina",
-    departure_date: "2025-08-25",
-    departure_time: "07:30",
-    arrival_time: "11:00",
-    duration_minutes: 210,
-    distance_km: 2430,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Tierra del Fuego Aviation",
-    aircraft_registration: "LV-EFG2",
-    charter_price_usd: 9800,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 10,
-    status: "available"
-  },
-  {
-    id: "fl_038",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "PDP",
-    destination_city: "Punta del Este",
-    destination_country: "Uruguay",
-    departure_date: "2025-08-26",
-    departure_time: "16:30",
-    arrival_time: "17:30",
-    duration_minutes: 60,
-    distance_km: 340,
-    aircraft_type: "Citation CJ3",
-    aircraft_category: "light_jet",
-    max_passengers: 7,
-    operator_name: "Rio de la Plata Air",
-    aircraft_registration: "LV-HIJ2",
-    charter_price_usd: 3200,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_039",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "ASU",
-    destination_city: "Asunción",
-    destination_country: "Paraguay",
-    departure_date: "2025-08-27",
-    departure_time: "10:30",
-    arrival_time: "12:00",
-    duration_minutes: 90,
-    distance_km: 1065,
-    aircraft_type: "King Air 350",
-    aircraft_category: "turboprop",
-    max_passengers: 9,
-    operator_name: "Mercosur Aviation",
-    aircraft_registration: "LV-KLM2",
-    charter_price_usd: 4200,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 9,
-    status: "available"
-  },
-  {
-    id: "fl_040",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "GRU",
-    destination_city: "São Paulo",
-    destination_country: "Brasil",
-    departure_date: "2025-08-28",
-    departure_time: "12:30",
-    arrival_time: "15:00",
-    duration_minutes: 150,
-    distance_km: 1675,
-    aircraft_type: "Citation XLS+",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Brasil-Argentina Air",
-    aircraft_registration: "LV-NOP2",
-    charter_price_usd: 6800,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 10,
-    status: "available"
-  },
-
-  // Vuelos adicionales para llegar a 50+
-  {
-    id: "fl_041",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "REL",
-    destination_city: "Trelew",
-    destination_country: "Argentina",
-    departure_date: "2025-08-29",
-    departure_time: "14:00",
-    arrival_time: "16:30",
-    duration_minutes: 150,
-    distance_km: 1350,
-    aircraft_type: "Citation CJ4",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "Chubut Aviation",
-    aircraft_registration: "LV-QRS2",
-    charter_price_usd: 5300,
-    empty_leg_price_per_seat_usd: 530,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_042",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "LPG",
-    destination_city: "La Plata",
-    destination_country: "Argentina",
-    departure_date: "2025-08-30",
-    departure_time: "17:00",
-    arrival_time: "17:30",
-    duration_minutes: 30,
-    distance_km: 56,
-    aircraft_type: "King Air 250",
-    aircraft_category: "turboprop",
-    max_passengers: 8,
-    operator_name: "Buenos Aires Air",
-    aircraft_registration: "LV-TUV2",
-    charter_price_usd: 1800,
-    empty_leg_price_per_seat_usd: 180,
-    available_seats: 6,
-    status: "available"
-  },
-  {
-    id: "fl_043",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "SFN",
-    destination_city: "Santa Fe",
-    destination_country: "Argentina",
-    departure_date: "2025-08-31",
-    departure_time: "13:30",
-    arrival_time: "15:00",
-    duration_minutes: 90,
-    distance_km: 475,
-    aircraft_type: "Citation CJ2",
-    aircraft_category: "light_jet",
-    max_passengers: 6,
-    operator_name: "Litoral Aviation",
-    aircraft_registration: "LV-WXY2",
-    charter_price_usd: 3200,
-    empty_leg_price_per_seat_usd: 320,
-    available_seats: 4,
-    status: "available"
-  },
-  {
-    id: "fl_044",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "ROS",
-    destination_city: "Rosario",
-    destination_country: "Argentina",
-    departure_date: "2025-09-01",
-    departure_time: "16:00",
-    arrival_time: "17:00",
-    duration_minutes: 60,
-    distance_km: 298,
-    aircraft_type: "Beechcraft Premier",
-    aircraft_category: "light_jet",
-    max_passengers: 6,
-    operator_name: "Rosario Air",
-    aircraft_registration: "LV-ZAB2",
-    charter_price_usd: 2600,
-    empty_leg_price_per_seat_usd: 260,
-    available_seats: 5,
-    status: "available"
-  },
-  {
-    id: "fl_045",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "CRD",
-    destination_city: "Comodoro Rivadavia",
-    destination_country: "Argentina",
-    departure_date: "2025-09-02",
-    departure_time: "08:30",
-    arrival_time: "11:30",
-    duration_minutes: 180,
-    distance_km: 1800,
-    aircraft_type: "Citation XLS",
-    aircraft_category: "mid_size",
-    max_passengers: 9,
-    operator_name: "Chubut Aviation",
-    aircraft_registration: "LV-CDE3",
-    charter_price_usd: 7200,
-    empty_leg_price_per_seat_usd: 640,
-    available_seats: 7,
-    status: "available"
-  },
-  {
-    id: "fl_046",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "TUC",
-    destination_city: "Tucumán",
-    destination_country: "Argentina",
-    departure_date: "2025-09-03",
-    departure_time: "14:30",
-    arrival_time: "16:30",
-    duration_minutes: 120,
-    distance_km: 1311,
-    aircraft_type: "Citation CJ4",
-    aircraft_category: "light_jet",
-    max_passengers: 8,
-    operator_name: "NOA Aviation",
-    aircraft_registration: "LV-FGH3",
-    charter_price_usd: 5600,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 8,
-    status: "available"
-  },
-  {
-    id: "fl_047",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "NQN",
-    destination_city: "Neuquén",
-    destination_country: "Argentina",
-    departure_date: "2025-09-04",
-    departure_time: "13:00",
-    arrival_time: "15:30",
-    duration_minutes: 150,
-    distance_km: 1176,
-    aircraft_type: "Citation XLS",
-    aircraft_category: "mid_size",
-    max_passengers: 9,
-    operator_name: "Neuquén Aviation",
-    aircraft_registration: "LV-IJK3",
-    charter_price_usd: 6200,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 9,
-    status: "available"
-  },
-  {
-    id: "fl_048",
-    flight_type: "charter",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "FTE",
-    destination_city: "El Calafate",
-    destination_country: "Argentina",
-    departure_date: "2025-09-05",
-    departure_time: "07:00",
-    arrival_time: "10:30",
-    duration_minutes: 210,
-    distance_km: 2140,
-    aircraft_type: "Citation Sovereign",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Glaciar Aviation",
-    aircraft_registration: "LV-LMN3",
-    charter_price_usd: 8900,
-    empty_leg_price_per_seat_usd: null,
-    available_seats: 10,
-    status: "available"
-  },
-  {
-    id: "fl_049",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "MVD",
-    destination_city: "Montevideo",
-    destination_country: "Uruguay",
-    departure_date: "2025-09-06",
-    departure_time: "15:30",
-    arrival_time: "16:30",
-    duration_minutes: 60,
-    distance_km: 200,
-    aircraft_type: "Citation CJ2",
-    aircraft_category: "light_jet",
-    max_passengers: 6,
-    operator_name: "Rio de la Plata Air",
-    aircraft_registration: "LV-OPQ3",
-    charter_price_usd: 2200,
-    empty_leg_price_per_seat_usd: 220,
-    available_seats: 4,
-    status: "available"
-  },
-  {
-    id: "fl_050",
-    flight_type: "empty_leg",
-    origin_code: "EZE",
-    origin_city: "Buenos Aires",
-    origin_country: "Argentina",
-    destination_code: "RIO",
-    destination_city: "Río de Janeiro",
-    destination_country: "Brasil",
-    departure_date: "2025-09-07",
-    departure_time: "11:00",
-    arrival_time: "14:00",
-    duration_minutes: 180,
-    distance_km: 1965,
-    aircraft_type: "Citation XLS+",
-    aircraft_category: "mid_size",
-    max_passengers: 10,
-    operator_name: "Brasil-Argentina Air",
-    aircraft_registration: "LV-RST3",
-    charter_price_usd: 7200,
-    empty_leg_price_per_seat_usd: 580,
-    available_seats: 8,
-    status: "available"
-  }
+// Datos de aeropuertos argentinos e internacionales
+const airports = [
+  // Argentina - Principales
+  { id: "eze", code: "EZE", name: "Aeropuerto Internacional Ezeiza", city: "Buenos Aires", country: "Argentina", lat: -34.8222, lng: -58.5358 },
+  { id: "arp", code: "ARP", name: "Aeropuerto Jorge Newbery", city: "Buenos Aires", country: "Argentina", lat: -34.5592, lng: -58.4156 },
+  { id: "cor", code: "COR", name: "Aeropuerto Córdoba", city: "Córdoba", country: "Argentina", lat: -31.3236, lng: -64.2081 },
+  { id: "mdz", code: "MDZ", name: "Aeropuerto Mendoza", city: "Mendoza", country: "Argentina", lat: -32.8317, lng: -68.7928 },
+  { id: "brc", code: "BRC", name: "Aeropuerto Bariloche", city: "San Carlos de Bariloche", country: "Argentina", lat: -41.1511, lng: -71.1575 },
+  { id: "ush", code: "USH", name: "Aeropuerto Ushuaia", city: "Ushuaia", country: "Argentina", lat: -54.8433, lng: -68.295 },
+  { id: "igt", code: "IGT", name: "Aeropuerto Iguazú", city: "Puerto Iguazú", country: "Argentina", lat: -25.7372, lng: -54.4736 },
+  { id: "sla", code: "SLA", name: "Aeropuerto Salta", city: "Salta", country: "Argentina", lat: -24.8561, lng: -65.4864 },
+  { id: "tuc", code: "TUC", name: "Aeropuerto Tucumán", city: "San Miguel de Tucumán", country: "Argentina", lat: -26.8409, lng: -65.1049 },
+  { id: "rgl", code: "RGL", name: "Aeropuerto Río Gallegos", city: "Río Gallegos", country: "Argentina", lat: -51.6089, lng: -69.3128 },
+  { id: "ftl", code: "FTL", name: "Aeropuerto Formosa", city: "Formosa", country: "Argentina", lat: -26.2128, lng: -58.2281 },
+  { id: "res", code: "RES", name: "Aeropuerto Resistencia", city: "Resistencia", country: "Argentina", lat: -27.45, lng: -59.0561 },
+  { id: "crd", code: "CRD", name: "Aeropuerto Comodoro Rivadavia", city: "Comodoro Rivadavia", country: "Argentina", lat: -45.7853, lng: -67.4656 },
+  { id: "nqn", code: "NQN", name: "Aeropuerto Neuquén", city: "Neuquén", country: "Argentina", lat: -38.9489, lng: -68.1558 },
+  { id: "pmr", code: "PMR", name: "Aeropuerto Puerto Madryn", city: "Puerto Madryn", country: "Argentina", lat: -42.7592, lng: -65.1028 },
+  
+  // Internacionales
+  { id: "scl", code: "SCL", name: "Aeropuerto Santiago", city: "Santiago", country: "Chile", lat: -33.3928, lng: -70.7858 },
+  { id: "pde", code: "PDE", name: "Aeropuerto Punta del Este", city: "Punta del Este", country: "Uruguay", lat: -34.8553, lng: -55.0944 },
+  { id: "asu", code: "ASU", name: "Aeropuerto Asunción", city: "Asunción", country: "Paraguay", lat: -25.2397, lng: -57.5194 },
+  { id: "gru", code: "GRU", name: "Aeropuerto São Paulo", city: "São Paulo", country: "Brasil", lat: -23.4356, lng: -46.4731 }
 ];
+
+// Datos de aeronaves
+const aircraft = [
+  { id: "citation_cj3", model: "Citation CJ3+", manufacturer: "Cessna", capacity: 7, category: "light", hourly_rate: 2800 },
+  { id: "learjet_75", model: "Learjet 75", manufacturer: "Bombardier", capacity: 8, category: "light", hourly_rate: 3200 },
+  { id: "hawker_850xp", model: "Hawker 850XP", manufacturer: "Hawker Beechcraft", capacity: 8, category: "midsize", hourly_rate: 3800 },
+  { id: "citation_sovereign", model: "Citation Sovereign", manufacturer: "Cessna", capacity: 9, category: "midsize", hourly_rate: 4200 },
+  { id: "challenger_350", model: "Challenger 350", manufacturer: "Bombardier", capacity: 10, category: "midsize", hourly_rate: 4800 },
+  { id: "gulfstream_g280", model: "Gulfstream G280", manufacturer: "Gulfstream", capacity: 10, category: "heavy", hourly_rate: 6500 },
+  { id: "falcon_2000", model: "Falcon 2000", manufacturer: "Dassault", capacity: 12, category: "heavy", hourly_rate: 7200 },
+  { id: "global_6000", model: "Global 6000", manufacturer: "Bombardier", capacity: 14, category: "ultra-long-range", hourly_rate: 9800 }
+];
+
+// Función para calcular distancia entre dos puntos
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371; // Radio de la Tierra en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return Math.round(R * c);
+}
+
+// Función para calcular duración de vuelo
+function calculateFlightDuration(distance: number): number {
+  const avgSpeed = 750; // km/h promedio para jets privados
+  return Math.round((distance / avgSpeed) * 60); // en minutos
+}
+
+// Función para calcular precio basado en distancia y tipo de aeronave
+function calculatePrice(distance: number, aircraft: any, flightType: string): { total: number, perSeat?: number } {
+  const duration = calculateFlightDuration(distance);
+  const basePrice = (duration / 60) * aircraft.hourly_rate;
+  
+  // Factores adicionales
+  const fuelSurcharge = distance * 0.8; // USD por km
+  const landingFees = 500; // USD fijo
+  const operatorMargin = basePrice * 0.25; // 25% margen
+  
+  const totalPrice = Math.round(basePrice + fuelSurcharge + landingFees + operatorMargin);
+  
+  if (flightType === 'empty_leg') {
+    // Empty legs son 60-80% más baratos
+    const discountedTotal = Math.round(totalPrice * 0.3);
+    const pricePerSeat = Math.round(discountedTotal / aircraft.capacity);
+    return { total: discountedTotal, perSeat: pricePerSeat };
+  }
+  
+  return { total: totalPrice };
+}
+
+// Generar vuelos empty legs
+function generateEmptyLegFlights(): any[] {
+  const flights = [];
+  const operators = ["Aerolíneas Ejecutivas", "Sky Charter", "Elite Aviation", "Platinum Jets", "VIP Airways"];
+  
+  // Rutas populares dentro de Argentina
+  const domesticRoutes = [
+    ["eze", "cor"], ["eze", "mdz"], ["eze", "brc"], ["eze", "sla"], ["eze", "tuc"],
+    ["eze", "igt"], ["eze", "ush"], ["eze", "rgl"], ["eze", "nqn"], ["eze", "crd"],
+    ["arp", "cor"], ["arp", "mdz"], ["arp", "brc"], ["arp", "sla"], ["arp", "pmr"],
+    ["cor", "mdz"], ["cor", "sla"], ["cor", "tuc"], ["mdz", "brc"], ["sla", "tuc"],
+    ["brc", "ush"], ["brc", "nqn"], ["nqn", "crd"], ["crd", "rgl"], ["igt", "sla"]
+  ];
+  
+  // Rutas internacionales
+  const internationalRoutes = [
+    ["eze", "scl"], ["eze", "pde"], ["eze", "asu"], ["eze", "gru"],
+    ["arp", "scl"], ["arp", "pde"], ["cor", "scl"], ["mdz", "scl"],
+    ["brc", "scl"], ["sla", "asu"], ["igt", "asu"]
+  ];
+  
+  const allRoutes = [...domesticRoutes, ...internationalRoutes];
+  
+  // Generar fechas para los próximos 30 días
+  const today = new Date();
+  
+  let flightId = 1;
+  
+  for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
+    const flightDate = new Date(today);
+    flightDate.setDate(today.getDate() + dayOffset);
+    
+    // 2-4 vuelos por día
+    const flightsPerDay = Math.floor(Math.random() * 3) + 2;
+    
+    for (let i = 0; i < flightsPerDay; i++) {
+      const route = allRoutes[Math.floor(Math.random() * allRoutes.length)];
+      const aircraftData = aircraft[Math.floor(Math.random() * aircraft.length)];
+      
+      const depAirport = airports.find(a => a.id === route[0]);
+      const arrAirport = airports.find(a => a.id === route[1]);
+      
+      if (!depAirport || !arrAirport) continue;
+      
+      const distance = calculateDistance(depAirport.lat, depAirport.lng, arrAirport.lat, arrAirport.lng);
+      const duration = calculateFlightDuration(distance);
+      const pricing = calculatePrice(distance, aircraftData, 'empty_leg');
+      
+      // Horarios aleatorios
+      const depHour = Math.floor(Math.random() * 16) + 6; // 6 AM a 10 PM
+      const depMinute = Math.floor(Math.random() * 4) * 15; // 0, 15, 30, 45
+      
+      const depTime = `${depHour.toString().padStart(2, '0')}:${depMinute.toString().padStart(2, '0')}`;
+      
+      // Calcular hora de llegada
+      const arrivalTime = new Date(flightDate);
+      arrivalTime.setHours(depHour, depMinute);
+      arrivalTime.setMinutes(arrivalTime.getMinutes() + duration);
+      
+      const arrTime = `${arrivalTime.getHours().toString().padStart(2, '0')}:${arrivalTime.getMinutes().toString().padStart(2, '0')}`;
+      
+      // Fecha de llegada (puede ser el día siguiente)
+      const arrDate = new Date(flightDate);
+      if (arrivalTime.getDate() !== flightDate.getDate()) {
+        arrDate.setDate(arrDate.getDate() + 1);
+      }
+      
+      const availableSeats = Math.floor(Math.random() * (aircraftData.capacity - 2)) + 1; // 1 a capacity-2 asientos
+      
+      flights.push({
+        id: `empty_leg_${flightId.toString().padStart(3, '0')}`,
+        flight_type: 'empty_leg',
+        aircraft_id: aircraftData.id,
+        aircraft: aircraftData,
+        departure_airport_id: depAirport.id,
+        departure_airport: depAirport,
+        arrival_airport_id: arrAirport.id,
+        arrival_airport: arrAirport,
+        departure_date: flightDate.toISOString().split('T')[0],
+        departure_time: depTime,
+        arrival_date: arrDate.toISOString().split('T')[0],
+        arrival_time: arrTime,
+        duration_minutes: duration,
+        distance_km: distance,
+        price_total: pricing.total,
+        price_per_seat: pricing.perSeat,
+        available_seats: availableSeats,
+        status: 'available',
+        operator: operators[Math.floor(Math.random() * operators.length)]
+      });
+      
+      flightId++;
+      
+      if (flights.length >= 60) break;
+    }
+    
+    if (flights.length >= 60) break;
+  }
+  
+  return flights.slice(0, 60);
+}
 
 serve(async (req) => {
   // Handle CORS
@@ -1229,76 +192,49 @@ serve(async (req) => {
     });
   }
 
-  try {
-    const url = new URL(req.url);
-    const method = req.method;
+  const url = new URL(req.url);
+  const path = url.pathname;
 
-    if (method === 'GET') {
-      // Obtener parámetros de consulta
-      const flightType = url.searchParams.get('flight_type'); // 'charter' o 'empty_leg'
+  try {
+    if (path === '/flights' && req.method === 'GET') {
+      // Obtener parámetros de búsqueda
+      const flightType = url.searchParams.get('type') || 'empty_leg';
       const origin = url.searchParams.get('origin');
       const destination = url.searchParams.get('destination');
       const date = url.searchParams.get('date');
-      const maxPrice = url.searchParams.get('max_price');
-      const minSeats = url.searchParams.get('min_seats');
-      const aircraftCategory = url.searchParams.get('aircraft_category');
-
-      let filteredFlights = [...mockFlights];
-
+      const maxPrice = url.searchParams.get('maxPrice');
+      
+      let flights = generateEmptyLegFlights();
+      
       // Aplicar filtros
-      if (flightType) {
-        filteredFlights = filteredFlights.filter(f => f.flight_type === flightType);
-      }
-
       if (origin) {
-        filteredFlights = filteredFlights.filter(f => 
-          f.origin_code.toLowerCase().includes(origin.toLowerCase()) ||
-          f.origin_city.toLowerCase().includes(origin.toLowerCase())
-        );
+        flights = flights.filter(f => f.departure_airport_id === origin);
       }
-
+      
       if (destination) {
-        filteredFlights = filteredFlights.filter(f => 
-          f.destination_code.toLowerCase().includes(destination.toLowerCase()) ||
-          f.destination_city.toLowerCase().includes(destination.toLowerCase())
-        );
+        flights = flights.filter(f => f.arrival_airport_id === destination);
       }
-
+      
       if (date) {
-        filteredFlights = filteredFlights.filter(f => f.departure_date === date);
+        flights = flights.filter(f => f.departure_date === date);
       }
-
+      
       if (maxPrice) {
-        const price = parseInt(maxPrice);
-        filteredFlights = filteredFlights.filter(f => {
-          if (f.flight_type === 'charter') {
-            return f.charter_price_usd <= price;
-          } else {
-            return f.empty_leg_price_per_seat_usd && f.empty_leg_price_per_seat_usd <= price;
-          }
-        });
+        const maxPriceNum = parseInt(maxPrice);
+        flights = flights.filter(f => f.price_per_seat <= maxPriceNum);
       }
-
-      if (minSeats) {
-        const seats = parseInt(minSeats);
-        filteredFlights = filteredFlights.filter(f => f.available_seats >= seats);
-      }
-
-      if (aircraftCategory) {
-        filteredFlights = filteredFlights.filter(f => f.aircraft_category === aircraftCategory);
-      }
-
+      
       // Ordenar por fecha y hora
-      filteredFlights.sort((a, b) => {
+      flights.sort((a, b) => {
         const dateA = new Date(`${a.departure_date}T${a.departure_time}`);
         const dateB = new Date(`${b.departure_date}T${b.departure_time}`);
         return dateA.getTime() - dateB.getTime();
       });
-
+      
       return new Response(JSON.stringify({
         success: true,
-        data: filteredFlights,
-        total: filteredFlights.length
+        data: flights,
+        total: flights.length
       }), {
         headers: {
           'Content-Type': 'application/json',
@@ -1306,29 +242,65 @@ serve(async (req) => {
         },
       });
     }
-
-    if (method === 'POST') {
-      // Crear nueva reserva
-      const body = await req.json();
-      
-      // Aquí normalmente guardaríamos en la base de datos
-      // Por ahora retornamos una respuesta mock
-      const booking = {
-        id: `booking_${Date.now()}`,
-        flight_id: body.flight_id,
-        user_id: body.user_id,
-        booking_type: body.booking_type,
-        passengers_count: body.passengers_count,
-        total_price_usd: body.total_price_usd,
-        passenger_details: body.passenger_details,
-        status: 'confirmed',
-        created_at: new Date().toISOString()
-      };
-
+    
+    if (path === '/airports' && req.method === 'GET') {
       return new Response(JSON.stringify({
         success: true,
-        data: booking,
-        message: 'Reserva creada exitosamente'
+        data: airports
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+    
+    if (path === '/aircraft' && req.method === 'GET') {
+      return new Response(JSON.stringify({
+        success: true,
+        data: aircraft
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+    
+    if (path === '/quote' && req.method === 'POST') {
+      const body = await req.json();
+      const { origin, destination, aircraft_id, passengers, date } = body;
+      
+      const depAirport = airports.find(a => a.id === origin);
+      const arrAirport = airports.find(a => a.id === destination);
+      const aircraftData = aircraft.find(a => a.id === aircraft_id);
+      
+      if (!depAirport || !arrAirport || !aircraftData) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: 'Invalid parameters'
+        }), { status: 400 });
+      }
+      
+      const distance = calculateDistance(depAirport.lat, depAirport.lng, arrAirport.lat, arrAirport.lng);
+      const duration = calculateFlightDuration(distance);
+      const pricing = calculatePrice(distance, aircraftData, 'charter');
+      
+      const quote = {
+        origin: depAirport,
+        destination: arrAirport,
+        aircraft: aircraftData,
+        distance_km: distance,
+        duration_minutes: duration,
+        total_price: pricing.total,
+        price_per_person: Math.round(pricing.total / passengers),
+        passengers: passengers,
+        date: date
+      };
+      
+      return new Response(JSON.stringify({
+        success: true,
+        data: quote
       }), {
         headers: {
           'Content-Type': 'application/json',
@@ -1339,26 +311,25 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: false,
-      error: 'Método no permitido'
-    }), {
-      status: 405,
+      error: 'Endpoint not found'
+    }), { 
+      status: 404,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-      },
+      }
     });
 
   } catch (error) {
-    console.error('Error en flights API:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: 'Error interno del servidor'
-    }), {
+      error: error.message
+    }), { 
       status: 500,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-      },
+      }
     });
   }
 });
